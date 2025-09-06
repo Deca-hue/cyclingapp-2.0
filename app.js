@@ -40,18 +40,85 @@
 
         // Initialize the app
         function initApp() {
+            setupManifest();
             loadSettings();
             setupEventListeners();
             checkGPSAvailability();
             updateHistoryList();
             updateLeaderboard();
+            registerServiceWorker();
             setupPWAInstall();
         }
-        // Set up manifest link
 
+        // Set up the web app manifest
+        function setupManifest() {
+            const manifest = {
+                "name": "CycleTracker",
+                "short_name": "CycleTracker",
+                "description": "A cycling app that tracks your rides with GPS",
+                "start_url": "/",
+                "display": "standalone",
+                "background_color": "#3b82f6",
+                "theme_color": "#3b82f6",
+                "orientation": "portrait",
+                "icons": [
+                    {
+                        "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDE5MiAxOTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPGNpcmNsZSBjeD0iOTYiIGN5PSI5NiIgcj0iOTYiIGZpbGw9IiMzYjgzZjYiLz4KICA8cGF0aCBkPSJNMTI4IDcySDEwNFYxMjBINzJWNzJINDBWMTIwQzQwIDEzNC4zMjggNTEuNjcyIDE0NiA2NiAxNDZIMTI2QzE0MC4zMjggMTQ2IDE1MiAxMzQuMzI4IDE1MiAxMjBWOTBDMTUyIDgwLjA1ODQgMTQzLjk0MiA3MiAxMzQgNzJIMTI4WiIgZmlsbD0id2hpdGUiLz4KPC9zdmc+Cg==",
+                        "sizes": "192x192",
+                        "type": "image/svg+xml"
+                    },
+                    {
+                        "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDUxMiA1MTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPGNpcmNsZSBjeD0iMjU2IiBjeT0iMjU2IiByPSIyNTYiIGZpbGw9IiMzYjgzZjYiLz4KICA8cGF0aCBkPSJNMzQxLjMzMyAyMTBIMjc3LjMzM1YzMjBIMTkyVjIxMEgxMDYuNjY3VjMyMEMxMDYuNjY3IDM1OC4zMDUgMTM3LjYyMiAzOTAgMTc2IDM5MEgzMzZDMzc0LjM3OCAzOTAgNDA1LjMzMyAzNTguMzA1IDQwNS4zMzMgMzIwVjI0MEM0MDUuMzMzIDIyNC43NjIgMzk0LjU3MSAyMTIgMzgxLjMzMyAyMTJIMzQxLjMzM1oiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo=",
+                        "sizes": "512x512",
+                        "type": "image/svg+xml"
+                    }
+                ]
+            };
+
+            const manifestURL = URL.createObjectURL(new Blob([JSON.stringify(manifest)], {type: 'application/json'}));
+            document.getElementById('app-manifest').href = manifestURL;
+        }
 
         // Register service worker for PWA functionality
-       
+        function registerServiceWorker() {
+            if ('serviceWorker' in navigator) {
+                const swCode = `
+                    self.addEventListener('install', (event) => {
+                        event.waitUntil(
+                            caches.open('cycler-tracker-v1').then((cache) => {
+                                return cache.addAll([
+                                    '/',
+                                    '/index.html',
+                                    '/styles.css',
+                                    '/app.js'
+                                ]);
+                            })
+                        );
+                    });
+
+                    self.addEventListener('fetch', (event) => {
+                        event.respondWith(
+                            caches.match(event.request).then((response) => {
+                                return response || fetch(event.request);
+                            })
+                        );
+                    });
+                `;
+
+                const swBlob = new Blob([swCode], {type: 'application/javascript'});
+                const swURL = URL.createObjectURL(swBlob);
+
+                navigator.serviceWorker.register(swURL)
+                    .then(() => {
+                        console.log('Service Worker registered successfully');
+                        document.body.classList.add('sw-ready');
+                    })
+                    .catch(error => {
+                        console.log('Service Worker registration failed:', error);
+                    });
+            }
+        }
+
         // Set up PWA install prompt
         function setupPWAInstall() {
             let deferredPrompt;

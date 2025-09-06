@@ -40,13 +40,11 @@
 
         // Initialize the app
         function initApp() {
-            setupManifest();
             loadSettings();
             setupEventListeners();
             checkGPSAvailability();
             updateHistoryList();
             updateLeaderboard();
-            registerServiceWorker();
             setupPWAInstall();
         }
         // Set up manifest link

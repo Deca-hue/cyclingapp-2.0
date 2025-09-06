@@ -1,6 +1,6 @@
 // serviceWorkerRegistration.js
 
-export function registerServiceWorker() {
+
     if ('serviceWorker' in navigator) {
         const swCode = `
             self.addEventListener('install', (event) => {
@@ -37,4 +37,3 @@ export function registerServiceWorker() {
                 console.log('Service Worker registration failed:', error);
             });
     }
-}
